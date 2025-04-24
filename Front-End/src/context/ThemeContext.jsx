@@ -1,20 +1,18 @@
-import React, { createContext, useState } from 'react';
+// src/context/ThemeContext.jsx
+import React, { createContext } from 'react';
+import PropTypes from 'prop-types';
+import { defaultTheme } from '../theme';
 
-// Cria o contexto do tema
 export const ThemeContext = createContext();
 
-// Provedor do tema
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light'); // Tema inicial: claro
-
-  // Função para alternar entre temas
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={defaultTheme}>
       {children}
     </ThemeContext.Provider>
   );
+};
+
+ThemeProvider.propTypes = {
+  children: PropTypes.node.isRequired
 };

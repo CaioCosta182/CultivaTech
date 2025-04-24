@@ -63,51 +63,51 @@ RNF04: Disponibilidade (deploy em cloud AWS/Azure).
 RNF05: Logs e monitoramento (ELK Stack/Prometheus).
 
 4. Diagrama de Classes
- 
-  ```mermaid  
-   classDiagram
-    class Usuario {
-        +id: UUID
-        +nome: String
-        +email: String
-        +senha: String
-        +cpfCnpj: String
-        +telefone: String
-        +perfil: Enum(Admin, Produtor, Tecnico)
-        +propriedades: Propriedade[]
-    }
 
-    class Propriedade {
-        +id: UUID
-        +nome: String
-        +localizacao: String
-        +area: Float
-        +tipo: Enum(Agricola, Pecuaria)
-        +usuarioId: UUID
-        +cultivos: Cultivo[]
-        +animais: Animal[]
-    }
+```mermaid
+ classDiagram
+  class Usuario {
+      +id: UUID
+      +nome: String
+      +email: String
+      +senha: String
+      +cpfCnpj: String
+      +telefone: String
+      +perfil: Enum(Admin, Produtor, Tecnico)
+      +propriedades: Propriedade[]
+  }
 
-    class Cultivo {
-        +id: UUID
-        +tipoPlanta: String
-        +dataPlantio: Date
-        +areaCultivada: Float
-        +propriedadeId: UUID
-    }
+  class Propriedade {
+      +id: UUID
+      +nome: String
+      +localizacao: String
+      +area: Float
+      +tipo: Enum(Agricola, Pecuaria)
+      +usuarioId: UUID
+      +cultivos: Cultivo[]
+      +animais: Animal[]
+  }
 
-    class Animal {
-        +id: UUID
-        +especie: String
-        +quantidade: Integer
-        +dataEntrada: Date
-        +dataSaida: Date
-        +propriedadeId: UUID
-    }
+  class Cultivo {
+      +id: UUID
+      +tipoPlanta: String
+      +dataPlantio: Date
+      +areaCultivada: Float
+      +propriedadeId: UUID
+  }
 
-    Usuario "1" --> "0..*" Propriedade : "possui"
-    Propriedade "1" --> "0..*" Cultivo : "contém"
-    Propriedade "1" --> "0..*" Animal : "contém"
+  class Animal {
+      +id: UUID
+      +especie: String
+      +quantidade: Integer
+      +dataEntrada: Date
+      +dataSaida: Date
+      +propriedadeId: UUID
+  }
+
+  Usuario "1" --> "0..*" Propriedade : "possui"
+  Propriedade "1" --> "0..*" Cultivo : "contém"
+  Propriedade "1" --> "0..*" Animal : "contém"
 ```
 
 5. Modelo do Banco de Dados
@@ -156,7 +156,7 @@ erDiagram
 ```
 
 6. Arquitetura de Microserviços
-   
+
 Serviço de Autenticação (Spring Security/Keycloak).
 
 Serviço de Usuários (CRUD de usuários).
@@ -172,7 +172,7 @@ API Gateway (Spring Cloud Gateway).
 Service Discovery (Eureka).
 
 7. Próximos Passos
-   
+
 Definir tecnologias específicas (Spring Boot, Node.js, Django?).
 
 Detalhar contratos de API (Swagger/OpenAPI).
@@ -180,3 +180,38 @@ Detalhar contratos de API (Swagger/OpenAPI).
 Implementar autenticação JWT + OAuth2.
 
 Configurar CI/CD (GitHub Actions/GitLab CI).
+
+# Checklist de Implementação
+
+## 🔐 Autenticação e Usuários
+
+- [x] RF01 - Cadastro de usuário
+- [ ] RF02 - Login (JWT/OAuth2)
+- [ ] RF03 - Recuperação de senha
+- [ ] RF04 - Perfis de acesso
+
+## 🌱 Propriedades Rurais
+
+- [ ] RF05 - Cadastro de propriedades
+- [ ] RF06 - Múltiplas propriedades por usuário
+- [ ] RF07 - Edição/exclusão de propriedades
+
+## 🐄 Cultivos e Animais
+
+- [ ] RF08 - Cadastro de cultivares
+- [ ] RF09 - Cadastro de animais
+- [ ] RF10 - Acompanhamento de safras
+
+## 📊 Análise e Insights
+
+- [ ] RF11 - Dashboard de métricas
+- [ ] RF12 - Relatórios exportáveis
+- [ ] RF13 - Sistema de alertas
+
+## ⚙️ Infraestrutura
+
+- [ ] RNF01 - Microserviços
+- [ ] RNF02 - Segurança
+- [ ] RNF03 - Banco de dados
+- [ ] RNF04 - Cloud deploy
+- [ ] RNF05 - Monitoramento
