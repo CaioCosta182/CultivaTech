@@ -1,5 +1,7 @@
-import React, { useContext } from 'react';
+
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useTheme } from './context/ThemeContext'; // Usando o hook personalizado
 import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
@@ -9,12 +11,10 @@ import CadastroCulturas from './pages/CadastroCulturas/CadastroCulturas';
 import CadastroAnimais from './pages/CadastroAnimais/CadastroAnimais';
 import MinhasPropriedades from './pages/MinhasPropriedades/MinhasPropriedades'; 
 import { GlobalStyles } from './styles/GlobalStyles';
-import { ThemeContext } from './context/ThemeContext';
 import ThemeToggle from './components/ThemeToggle';
 
-
 function App() {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useTheme(); // Usando o hook useTheme em vez de useContext diretamente
 
   return (
     <Router>

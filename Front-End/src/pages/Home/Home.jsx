@@ -1,24 +1,28 @@
-import React, { useContext } from 'react';
+
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Title, Description, ButtonContainer, Button } from './styles';
-import { ThemeContext } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { 
+  Container, 
+  Title, 
+  Description, 
+  ButtonContainer, 
+  Button 
+} from './styles';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext); // Obtém o tema atual
+  const { theme } = useTheme();
 
-  const handleLoginClick = () => {
-    navigate('/login'); // Navega para a tela de Login
-  };
-
-  const handleRegisterClick = () => {
-    navigate('/register'); // Navega para a tela de Cadastro
-  };
+  const handleLoginClick = () => navigate('/login');
+  const handleRegisterClick = () => navigate('/register');
 
   return (
-    <Container>
-      <Title>Bem-vindo ao CultivaTech</Title>
-      <Description>Gerencie suas propriedades e culturas de forma eficiente.</Description>
+    <Container theme={theme}>
+      <Title theme={theme}>Bem-vindo ao CultivaTech</Title>
+      <Description theme={theme}>
+        Gerencie suas propriedades e culturas de forma eficiente.
+      </Description>
       <ButtonContainer>
         <Button theme={theme} onClick={handleLoginClick}>
           Login

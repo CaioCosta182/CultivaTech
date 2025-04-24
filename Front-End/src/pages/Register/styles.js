@@ -20,11 +20,11 @@ export const Container = styled.div`
   margin: 2rem auto;
   padding: 2rem;
   border-radius: 8px;
-  background-color: ${getThemeValue("colors.white", defaultTheme.colors.white)};
+  background-color: ${({ theme }) => theme?.colors?.white || "#ffffff"};
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   h2 {
-    color: ${getThemeValue("colors.primary", defaultTheme.colors.primary)};
+    color: ${({ theme }) => theme?.colors?.primary || "#4361ee"};
     text-align: center;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
@@ -43,7 +43,7 @@ export const Form = styled.form`
 `;
 
 export const Input = styled.input`
-  width: 100%;
+  width: 98%;
   padding: 0.8rem 1rem;
   border: 1px solid
     ${(props) =>
