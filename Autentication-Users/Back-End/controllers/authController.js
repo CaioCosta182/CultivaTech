@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import pool from "../config/db";
+import pool from "../config/db.js";
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -46,7 +46,8 @@ export const login = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  console.log("Body recebido no registro:", req.body);
+  const { name, email, password, cpfCnpj, phone, profileType } = req.body;
 
   try {
     // 1. Verifica se usuário já existe
@@ -62,10 +63,11 @@ export const register = async (req, res) => {
     // 2. Criptografa a senha
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // 3. Insere novo usuário
+    // 3. Insere novo usuário com os novos campos
     const [result] = await pool.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword]
+      `INSERT INTO users (name, email, password, cpf_cnpj, phone, profile_type)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [name, email, hashedPassword, cpfCnpj, phone, profileType]
     );
 
     // 4. Gera token para o novo usuário
@@ -76,14 +78,32 @@ export const register = async (req, res) => {
         id: result.insertId,
         name,
         email,
+        cpfCnpj: cpfCnpj,
+        phone,
+        profileType,
       },
       token,
     });
-  } catch (error) {
-    console.error("Erro no registro:", error);
-    res.status(500).json({ error: "Erro no servidor" });
+  }
+    catch (error) {
+  console.error("Erro no registro:", error);
+  res.status(500).json({ 
+    error: "Erro no servidor",
+    details: error.stack // para ver o stack trace completo
+  });
+
+   // Tratamento específico para erro de duplicação de email
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: "Email já cadastrado" });
+    }
+    
+    res.status(500).json({ 
+      error: "Erro no servidor",
+      details: error.message  // Adicione detalhes do erro
+    });
   }
 };
+
 
 export const protect = async (req, res, next) => {
   let token;

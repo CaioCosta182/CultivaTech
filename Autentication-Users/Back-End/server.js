@@ -1,12 +1,18 @@
 import express from "express";
-import authRoutes from "./routes/authRoutes";
-// ... outras importações
+import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use("/api/auth", authRoutes);
-// ... outras configurações
 
-const PORT = process.env.PORT || 5000;
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
