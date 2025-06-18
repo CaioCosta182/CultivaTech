@@ -1,0 +1,62 @@
+services:
+  backend:
+    build:
+      context: ./Back-End
+      dockerfile: Dockerfile
+    container_name: cultivatech-backend # auth-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: cultivatech
+      DB_PASSWORD: admin123
+      DB_USER: root
+      JWT_SECRET: "sua_chave_secreta_aqui"
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+      
+
+  db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: cultivatech
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./Back-End/sql/dump.sql:/docker-entrypoint-initdb.d/init.sql 
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin123"]
+      timeout: 20s
+      interval: 10s
+      retries: 10
+    networks:
+      - app-network
+
+
+  frontend:
+    build:
+      context: ./Front-End
+      dockerfile: Dockerfile
+    container_name: auth-frontend
+    ports:
+       - "5173:5173"
+    environment:
+    - REACT_APP_API_URL=https://api.backend.com
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:

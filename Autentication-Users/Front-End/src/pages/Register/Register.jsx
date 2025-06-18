@@ -1,14 +1,14 @@
 // src/pages/Register/Register.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
-import { 
-  Container, 
-  Form, 
-  Input, 
-  Button, 
-  Select, 
+import {
+  Container,
+  Form,
+  Input,
+  Button,
+  Select,
   ErrorMessage,
-  InputGroup 
+  InputGroup
 } from './styles';
 
 const Register = () => {
@@ -34,7 +34,7 @@ const Register = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name) newErrors.name = 'Nome é obrigatório';
     if (!formData.email) {
       newErrors.email = 'E-mail é obrigatório';
@@ -81,13 +81,13 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      const response = await axios.post('/api/register', {
+      const response = await axios.post('/api/auth/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -95,15 +95,23 @@ const Register = () => {
         phone: formData.phone.replace(/\D/g, ''),
         profileType: formData.profileType
       });
-      
+
       console.log('Registro bem-sucedido:', response.data);
+      
       // Redirecionar para o login ou dashboard
     } catch (error) {
-      console.error('Erro ao registrar:', error);
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
+      console.error("Erro no registro:", error);
+
+      if (error.response) {
+        const msg = error.response.data?.error || 'Erro desconhecido no servidor.';
+        setErrors({ email: msg });
+      } else if (error.request) {
+        alert("Não foi possível se conectar ao servidor. Verifique sua conexão.");
+      } else {
+        alert("Erro inesperado. Tente novamente.");
       }
-    } finally {
+    }
+    finally {
       setIsSubmitting(false);
     }
   };

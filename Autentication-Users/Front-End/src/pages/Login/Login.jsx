@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, LoginBox, Title, Form, Input, Button, RegisterButton } from './styles';
 import axios from 'axios';
@@ -11,7 +11,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/login', { email, password });
+      const response = await axios.post('/api/auth/login', { email, password });
       console.log(response.data);
       navigate('/dashboard'); // Redireciona para o dashboard após o login
     } catch (error) {

@@ -1,20 +1,14 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import pool from '../config/db.js'; // sua conexão MySQL
 
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-  },
-  { timestamps: true }
-);
+export const createUser = async ({ name, email, password, cpfCnpj, phone, profileType }) => {
+  const [result] = await pool.query(
+    'INSERT INTO users (name, email, password, cpf_Cnpj, phone, profile_type) VALUES (?, ?, ?, ?, ?, ?)',
+    [name, email, password, cpfCnpj, phone, profileType]
+  );
+  return result.insertId;
+};
 
-// Hash da senha antes de salvar
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
-
-export default mongoose.model("User", userSchema);
+export const findUserByEmail = async (email) => {
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+  return rows[0];
+};
