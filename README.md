@@ -215,3 +215,59 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 - [ ] RNF03 - Banco de dados
 - [ ] RNF04 - Cloud deploy
 - [ ] RNF05 - Monitoramento
+
+
+
+<!-- 
+✅ Arquivo docker-compose.yml:
+docker-compose.yml orquestra 6 containers principais dentro de uma rede chamada cultivatech-net:
+
+discovery-server (Spring Eureka)
+config-server (Spring Cloud Config)
+api-gateway (Spring Cloud Gateway)
+auth-service (Node.js - autenticação de usuários)
+auth-db (MySQL - banco para o auth-service)
+auth-frontend (React - interface do usuário)
+
+🔧 Explicação dos serviços do seu projeto CultivaTech:
+🧠 discovery-server
+Função: Servidor Eureka do Spring Cloud, responsável por registrar e descobrir microserviços.
+Porta: 8761 (externa 8762)
+Healthcheck: Verifica se está saudável pela URL /actuator/health.
+
+⚙️ config-server
+Função: Fornece arquivos de configuração centralizados para os serviços Spring.
+Depende de: discovery-server (só inicia quando ele estiver saudável).
+Healthcheck: também consulta /config/actuator/health.
+
+🌐 api-gateway
+Função: Gateway central que recebe requisições externas e redireciona para os serviços corretos.
+Porta: 8080 (acesso do sistema)
+Depende de: discovery-server
+
+🔐 auth-service (Node.js)
+Função: Serviço de autenticação e gerenciamento de usuários.
+Porta: 3000
+Variáveis:
+ - DB_HOST, DB_USER, DB_PASSWORD: conexão com o banco MySQL
+ - JWT_SECRET: chave para autenticação via JWT
+ - EUREKA_URL: registra-se no Eureka
+Depende de: discovery-server e auth-db
+
+💾 auth-db (MySQL)
+Função: Banco de dados do serviço de autenticação
+Volume:
+ - Persistência dos dados (db-data)
+ - Script SQL de inicialização (dump.sql)
+ - Portas 3306
+Healthcheck: Verifica se o MySQL está pronto
+
+💻 auth-frontend (React)
+Função: Interface web do sistema de login/autenticação
+Porta: 5173
+Depende de: api-gateway
+
+🌐 Rede e Volumes
+Rede: cultivatech-net conecta todos os serviços.
+Volume: db-data para manter os dados do banco mesmo após reinicializações.
+
