@@ -1,0 +1,112 @@
+services:
+  # Banco de dados MySQL
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: cultivatech
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./Autentication-Users/Back-End/sql/dump.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin123"]
+      timeout: 20s
+      interval: 10s
+      retries: 10
+    networks:
+      - cultivatech-net
+
+  # Discovery Server (Eureka)
+  discovery-server:
+    build:
+      context: ./discovery-server
+    container_name: discovery-server
+    ports:
+      - "8762:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - cultivatech-net
+
+  # Servidor de Configuração /  Config-Server
+  config-server:
+    build:
+      context: ./Config-server
+    container_name: config-server
+    ports:
+      - "8889:8889"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8889/config/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      EUREKA_CLIENT_ENABLED: "true"
+    networks:
+      - cultivatech-net
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - cultivatech-net
+
+  # Serviço de Autenticação (Node.js)
+  auth-service:
+    build:
+      context: ./Autentication-Users/Back-End
+    container_name: auth-service
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: auth-db
+      DB_NAME: cultivatech
+      DB_USER: root
+      DB_PASSWORD: admin123
+      JWT_SECRET: "sua_chave_secreta_aqui"
+      PORT: 3000
+      EUREKA_URL: http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      auth-db:
+        condition: service_healthy
+    networks:
+      - cultivatech-net
+
+  # Interface do Usuário (React)
+  auth-frontend:
+    build:
+      context: ./Autentication-Users/Front-End
+    container_name: auth-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - cultivatech-net
+
+networks:
+  cultivatech-net:
+    driver: bridge
+
+volumes:
+  db-data:

@@ -8,6 +8,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Instala dependências incluindo o eureka-js-client
+RUN npm install --include=dev eureka-js-client
+
 # Copia o restante
 COPY . .
 
