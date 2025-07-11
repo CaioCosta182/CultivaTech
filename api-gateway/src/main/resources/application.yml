@@ -10,7 +10,7 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://auth-service:3000
+          uri:  lb://auth-service
           predicates:
             - Path=/api/auth/**
           filters:

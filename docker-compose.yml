@@ -24,12 +24,13 @@ services:
       context: ./discovery-server
     container_name: discovery-server
     ports:
-      - "8762:8761"
+      - "8761:8761"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q UP || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 12
+      start_period: 60s
     networks:
       - cultivatech-net
 
@@ -49,7 +50,7 @@ services:
       timeout: 5s
       retries: 10
     environment:
-      EUREKA_CLIENT_ENABLED: "true"
+      WAIT_FOR: discovery-server:8761
     networks:
       - cultivatech-net
 
