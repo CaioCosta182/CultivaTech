@@ -9,10 +9,10 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://backend:3000',  // Nome do serviço Docker
+        target: 'http://api-gateway:8080',  // Nome do serviço gateway
         changeOrigin: true,
-        secure: false
-      },
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      }
     },
     hmr: {
       protocol: 'ws',
