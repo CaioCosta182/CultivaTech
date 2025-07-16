@@ -1,5 +1,5 @@
 services:
-  # Banco de dados MySQL
+  # Banco de dados MySQL para autenticação
   auth-db:
     image: mysql:8.0
     container_name: auth-db
@@ -14,6 +14,23 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin123"]
       timeout: 20s
       interval: 10s
+      retries: 10
+    networks:
+      - cultivatech-net
+
+  # Banco de dados MySQL para propriedades
+  property-db:
+    image: mysql:8.0
+    container_name: property-db
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: propertydb
+    volumes:
+      - property-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin123"]
+      interval: 10s
+      timeout: 20s
       retries: 10
     networks:
       - cultivatech-net
@@ -34,7 +51,7 @@ services:
     networks:
       - cultivatech-net
 
-  # Servidor de Configuração /  Config-Server
+  # Servidor de Configuração
   config-server:
     build:
       context: ./Config-server
@@ -90,7 +107,7 @@ services:
     networks:
       - cultivatech-net
 
-  # Interface do Usuário (React)
+  # Frontend de Autenticação
   auth-frontend:
     build:
       context: ./Autentication-Users/Front-End
@@ -105,9 +122,29 @@ services:
     networks:
       - cultivatech-net
 
+  # Serviço de Propriedades
+  property-service:
+    build: ./property-service
+    container_name: property-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://property-db:3306/propertydb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+    depends_on:
+      property-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - cultivatech-net
+
 networks:
   cultivatech-net:
     driver: bridge
 
 volumes:
   db-data:
+  property-data:

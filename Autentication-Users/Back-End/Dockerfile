@@ -4,12 +4,14 @@ FROM node:18
 # Diretório de trabalho
 WORKDIR /app
 
-# Copia dependências
-COPY package*.json ./
-RUN npm install
+# Usar ES Modules
+RUN echo '{ "type": "module" }' > /app/package.json
 
-# Instala dependências incluindo o eureka-js-client
-RUN npm install --include=dev eureka-js-client
+# Copia e instala dependências
+COPY package*.json ./
+RUN npm install eureka-js-client  # Instala explicitamente o pacote
+
+RUN npm install
 
 # Copia o restante
 COPY . .

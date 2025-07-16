@@ -1,24 +1,4 @@
-// import express from "express";
-// import cors from "cors";
-// import authRoutes from "./routes/authRoutes.js";
-
-// const app = express();
-
-// app.use(cors({
-//   origin: 'http://localhost:5173',
-//   methods: ['GET', 'POST'],
-//   credentials: true
-// }));
-
-// app.use(express.json());
-// app.use("/api/auth", authRoutes);
-
-
-// const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
-
-
-import Eureka from 'eureka-js-client';
+import { Eureka } from 'eureka-js-client';
 
 // Configuração do Eureka (APÓS as importações, ANTES do app.listen)
 const eurekaClient = new Eureka({
@@ -26,7 +6,7 @@ const eurekaClient = new Eureka({
     app: 'auth-service',
     instanceId: 'auth-service:3000',
     hostName: 'auth-service', // Nome do container no Docker
-    ipAddr: '172.20.0.2',     // Pode manter genérico
+    ipAddr: process.env.HOST_IP || 'localhost',
     statusPageUrl: 'http://auth-service:3000',
     healthCheckUrl: 'http://auth-service:3000/health',
     port: {
