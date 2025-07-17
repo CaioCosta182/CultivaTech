@@ -10,19 +10,28 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://auth-service:3000
+          uri:  lb://auth-service
           predicates:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
             
-        # Adicione outras rotas conforme necessário
+         # Nova rota para property-service
         - id: property-service
           uri: lb://property-service
           predicates:
             - Path=/api/properties/**
           filters:
             - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: propertyCircuitBreaker
+                fallbackUri: forward:/fallback/property
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
             
     loadbalancer:
       ribbon:

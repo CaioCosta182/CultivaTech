@@ -18,6 +18,8 @@
         <module>config-server</module>
         <module>discovery-server</module>
         <module>auth-service</module>
+        <module>api-gateway</module>
+        <module>property-service</module>
     </modules>
 
 </project>

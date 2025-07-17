@@ -271,3 +271,7 @@ Depende de: api-gateway
 Rede: cultivatech-net conecta todos os serviços.
 Volume: db-data para manter os dados do banco mesmo após reinicializações.
 
+
+
+docker-compose down -v  # Remove tudo, incluindo volumes
+docker-compose up -d    # Recria todos os serviços

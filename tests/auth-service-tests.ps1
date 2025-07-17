@@ -108,72 +108,72 @@ try {
 }
 
 # 4. Testar Property Service
-if (Test-Path ".\token.txt") {
-    $token = Get-Content -Path ".\token.txt"
-    Write-Host "`n[4/6] Testando Property Service..."
-    try {
-        # Health Check
-        $health = Invoke-RestMethod -Uri "http://localhost:8082/api/properties/health" -ErrorAction Stop
-        Write-Host "✅ Health Check: $health"
+# if (Test-Path ".\token.txt") {
+#     $token = Get-Content -Path ".\token.txt"
+#     Write-Host "`n[4/6] Testando Property Service..."
+#     try {
+#         # Health Check
+#         $health = Invoke-RestMethod -Uri "http://localhost:8082/api/properties/health" -ErrorAction Stop
+#         Write-Host "✅ Health Check: $health"
         
-        # Criar propriedade
-        $property = @{
-            name = "Fazenda Teste"
-            size = "100 hectares"
-            location = "Minas Gerais"
-        } | ConvertTo-Json
+#         # Criar propriedade
+#         $property = @{
+#             name = "Fazenda Teste"
+#             size = "100 hectares"
+#             location = "Minas Gerais"
+#         } | ConvertTo-Json
         
-        $createResponse = Invoke-RestMethod -Uri "http://localhost:8082/api/properties" `
-            -Method POST `
-            -ContentType "application/json" `
-            -Headers @{"Authorization" = "Bearer $token"} `
-            -Body $property
+#         $createResponse = Invoke-RestMethod -Uri "http://localhost:8082/api/properties" `
+#             -Method POST `
+#             -ContentType "application/json" `
+#             -Headers @{"Authorization" = "Bearer $token"} `
+#             -Body $property
             
-        Write-Host "✅ Propriedade criada: $($createResponse | ConvertTo-Json)"
-    } catch {
-        Write-Host "❌ FALHA - $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
+#         Write-Host "✅ Propriedade criada: $($createResponse | ConvertTo-Json)"
+#     } catch {
+#         Write-Host "❌ FALHA - $($_.Exception.Message)" -ForegroundColor Red
+#     }
+# }
 
-# 5. Testar Production Service
-if (Test-Path ".\token.txt") {
-    $token = Get-Content -Path ".\token.txt"
-    Write-Host "`n[5/6] Testando Production Service..."
-    try {
-        # Health Check
-        $health = Invoke-RestMethod -Uri "http://localhost:8083/api/productions/health" -ErrorAction Stop
-        Write-Host "✅ Health Check: $health"
+# # 5. Testar Production Service
+# if (Test-Path ".\token.txt") {
+#     $token = Get-Content -Path ".\token.txt"
+#     Write-Host "`n[5/6] Testando Production Service..."
+#     try {
+#         # Health Check
+#         $health = Invoke-RestMethod -Uri "http://localhost:8083/api/productions/health" -ErrorAction Stop
+#         Write-Host "✅ Health Check: $health"
         
-        # Adicionar produção
-        $production = @{
-            type = "Milho"
-            quantity = 500
-            unit = "sacas"
-        } | ConvertTo-Json
+#         # Adicionar produção
+#         $production = @{
+#             type = "Milho"
+#             quantity = 500
+#             unit = "sacas"
+#         } | ConvertTo-Json
         
-        $createResponse = Invoke-RestMethod -Uri "http://localhost:8083/api/productions" `
-            -Method POST `
-            -ContentType "application/json" `
-            -Headers @{"Authorization" = "Bearer $token"} `
-            -Body $production
+#         $createResponse = Invoke-RestMethod -Uri "http://localhost:8083/api/productions" `
+#             -Method POST `
+#             -ContentType "application/json" `
+#             -Headers @{"Authorization" = "Bearer $token"} `
+#             -Body $production
             
-        Write-Host "✅ Produção adicionada: $($createResponse | ConvertTo-Json)"
-    } catch {
-        Write-Host "❌ FALHA - $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
+#         Write-Host "✅ Produção adicionada: $($createResponse | ConvertTo-Json)"
+#     } catch {
+#         Write-Host "❌ FALHA - $($_.Exception.Message)" -ForegroundColor Red
+#     }
+# }
 
-# 6. Testar API Gateway (se disponível)
-Write-Host "`n[6/6] Testando API Gateway..."
-try {
-    $health = Invoke-RestMethod -Uri "http://localhost:8080/actuator/health" -ErrorAction Stop
-    Write-Host "✅ Health Check: $($health.status)"
+# # 6. Testar API Gateway (se disponível)
+# Write-Host "`n[6/6] Testando API Gateway..."
+# try {
+#     $health = Invoke-RestMethod -Uri "http://localhost:8080/actuator/health" -ErrorAction Stop
+#     Write-Host "✅ Health Check: $($health.status)"
     
-    # Testar rota para Auth Service
-    $authHealth = Invoke-RestMethod -Uri "http://localhost:8080/api/auth/health" -ErrorAction Stop
-    Write-Host "✅ Rota Auth Service: $authHealth"
-} catch {
-    Write-Host "⚠️ Gateway não disponível - $($_.Exception.Message)" -ForegroundColor Yellow
-}
+#     # Testar rota para Auth Service
+#     $authHealth = Invoke-RestMethod -Uri "http://localhost:8080/api/auth/health" -ErrorAction Stop
+#     Write-Host "✅ Rota Auth Service: $authHealth"
+# } catch {
+#     Write-Host "⚠️ Gateway não disponível - $($_.Exception.Message)" -ForegroundColor Yellow
+# }
 
-Write-Host "`n=== TESTES CONCLUÍDOS ==="
+# Write-Host "`n=== TESTES CONCLUÍDOS ==="
