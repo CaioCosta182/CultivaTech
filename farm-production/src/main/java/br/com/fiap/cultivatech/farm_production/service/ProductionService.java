@@ -1,7 +1,7 @@
-package com.fiap.cultivatech.farm_production.service;
+package br.com.fiap.cultivatech.farm_production.service;
 
-import com.fiap.cultivatech.farm_production.model.Production;
-import com.fiap.cultivatech.farm_production.repository.ProductionRepository;
+import br.com.fiap.cultivatech.farm_production.model.Production;
+import br.com.fiap.cultivatech.farm_production.repository.ProductionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

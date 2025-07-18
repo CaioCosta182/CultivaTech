@@ -62,12 +62,10 @@ services:
       discovery-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8889/config/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    environment:
-      WAIT_FOR: discovery-server:8761
+      test: ["CMD-SHELL", "curl -f http://localhost:8889/config/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - cultivatech-net
 
@@ -96,16 +94,27 @@ services:
       DB_NAME: cultivatech
       DB_USER: root
       DB_PASSWORD: admin123
-      JWT_SECRET: "sua_chave_secreta_aqui"
       PORT: 3000
-      EUREKA_URL: http://discovery-server:8761/eureka
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://localhost:8761/eureka/
+      EUREKA_INSTANCE_APPNAME: auth-service
+      EUREKA_INSTANCE_INSTANCE_ID: auth-service:3000
+      EUREKA_INSTANCE_NON_SECURE_PORT: 3000
+      EUREKA_INSTANCE_HOSTNAME: auth-service
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      # Configurações de saúde
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     depends_on:
-      discovery-server:
-        condition: service_healthy
-      auth-db:
-        condition: service_healthy
-    networks:
-      - cultivatech-net
+     discovery-server:
+      condition: service_healthy
+     auth-db:
+      condition: service_healthy
+     config-server:
+      condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Frontend de Autenticação
   auth-frontend:
@@ -142,10 +151,10 @@ services:
       - cultivatech-net
 
   # Serviço de Produção Agrícola
-  farm-production-service:
+  farm-production:
     build: 
-      context: ./farm-production-service
-    container_name: farm-production-service
+      context: ./farm-production
+    container_name: farm-production
     ports:
       - "8082:8080"  # Alterado para porta 8082 externamente
     environment:

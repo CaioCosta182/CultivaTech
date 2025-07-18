@@ -1,8 +1,8 @@
-package com.fiap.cultivatech.farm_production.repository;
+package br.com.fiap.cultivatech.farm_production.repository;
 
-import com.fiap.cultivatech.farm_production.model.Production;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import br.com.fiap.cultivatech.farm_production.model.Production;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.agro.production.exception;
+package br.com.fiap.cultivatech.farm_production.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

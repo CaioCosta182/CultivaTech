@@ -1,25 +1,31 @@
-# Base
-FROM node:18
+FROM node:18.20.2-alpine
 
-# Diretório de trabalho
 WORKDIR /app
 
-# Usar ES Modules
-RUN echo '{ "type": "module" }' > /app/package.json
+# Instala jq para manipulação de JSON
+RUN apk add --no-cache jq
 
-# Copia e instala dependências
-COPY package*.json ./
-RUN npm install eureka-js-client  # Instala explicitamente o pacote
+# Cria package.json mínimo para instalação inicial
+RUN echo '{"dependencies":{"eureka-js-client":"4.5.0"}}' > package.json
 
-RUN npm install
+# Instala o eureka-js-client primeiro com flags especiais
+RUN npm install eureka-js-client@4.5.0 --legacy-peer-deps --ignore-scripts
 
-# Copia o restante
+# Copia o package.json real
+COPY package.json .
+
+# Instala outras dependências
+RUN npm install --legacy-peer-deps
+
+# Copia o restante do código
 COPY . .
 
-# Expõe a porta (ajuste se for diferente)
+# Configura como ES Module (usando jq)
+RUN echo '{"type":"module"}' > temp.json && \
+    jq -s '.[0] * .[1]' package.json temp.json > temp2.json && \
+    mv temp2.json package.json && \
+    rm temp.json
+
 EXPOSE 3000
 
-RUN apt-get update && apt-get install -y default-mysql-client
-
-# Comando para iniciar
 CMD ["node", "server.js"]

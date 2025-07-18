@@ -9,14 +9,24 @@ spring:
   cloud:
     gateway:
       routes:
+        # Serviço de Autenticação
         - id: auth-service
-          uri:  lb://auth-service
+          uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
-            
-         # Nova rota para property-service
+            - name: CircuitBreaker
+              args:
+                name: authCircuitBreaker
+                fallbackUri: forward:/fallback/auth
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+
+        # Serviço de Propriedades
         - id: property-service
           uri: lb://property-service
           predicates:
@@ -29,32 +39,68 @@ spring:
                 fallbackUri: forward:/fallback/property
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
                 key-resolver: "#{@userKeyResolver}"
-            
-    loadbalancer:
-      ribbon:
-        enabled: false
-      # Configuração adicional para ambiente local
-      health-check:
-        interval: 5s
-        timeout: 3s
+
+        # Serviço de Produção Agrícola
+        - id: farm-production-service
+          uri: lb://farm-production-service
+          predicates:
+            - Path=/api/production/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: productionCircuitBreaker
+                fallbackUri: forward:/fallback/production
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE
+                methods: GET,POST
+                backoff:
+                  firstBackoff: 10ms
+                  maxBackoff: 1000ms
+                  factor: 2
+                  basedOnPreviousValue: false
+
+        # Configuração Global de Fallback
+        - id: fallback
+          uri: forward:/fallback/default
+          predicates:
+            - Path=/fallback/**
+
+      # Configurações globais
+      default-filters:
+        - name: DedupeResponseHeader
+          args:
+            name: Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            strategy: RETAIN_FIRST
+      loadbalancer:
+        ribbon:
+          enabled: false
+        health-check:
+          interval: 5s
+          timeout: 3s
+
+    # Configuração do Redis para Rate Limiter
+    redis:
+      host: redis-service
+      port: 6379
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://discovery-server:8762/eureka
-    # Configurações para ambiente de desenvolvimento
+      defaultZone: http://localhost:8761/eureka/
     healthcheck:
       enabled: true
-    initial-instance-info-replication-interval-seconds: 5
     registry-fetch-interval-seconds: 5
   instance:
-    hostname: localhost
-    prefer-ip-address: false
+    hostname: api-gateway
+    prefer-ip-address: true
     lease-renewal-interval-in-seconds: 5
     lease-expiration-duration-in-seconds: 15
 
@@ -62,14 +108,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,routes
   endpoint:
     health:
       show-details: always
+    gateway:
+      enabled: true
 
 logging:
   level:
-    org.springframework: DEBUG
-    org.springframework.cloud.gateway: TRACE
-    reactor.netty: DEBUG
-    com.netflix.discovery: DEBUG
+    org.springframework: INFO
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: WARN
+    com.netflix.discovery: INFO
+    com.netflix.eureka: INFO

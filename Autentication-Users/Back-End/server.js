@@ -1,46 +1,22 @@
-import { Eureka } from 'eureka-js-client';
-
-// Configuração do Eureka (APÓS as importações, ANTES do app.listen)
+// Configuração do Eureka deve usar variáveis de ambiente
 const eurekaClient = new Eureka({
   instance: {
-    app: 'auth-service',
-    instanceId: 'auth-service:3000',
-    hostName: 'auth-service', // Nome do container no Docker
-    ipAddr: process.env.HOST_IP || 'localhost',
-    statusPageUrl: 'http://auth-service:3000',
-    healthCheckUrl: 'http://auth-service:3000/health',
+    app: process.env.EUREKA_INSTANCE_APPNAME || 'auth-service',
+    hostName: process.env.EUREKA_INSTANCE_HOSTNAME || 'localhost',
+    ipAddr: process.env.INSTANCE_IP || '127.0.0.1',
     port: {
-      '$': 3000,
-      '@enabled': true,
+      '$': parseInt(process.env.PORT) || 3000,
+      '@enabled': true
     },
-    vipAddress: 'auth-service',
+    vipAddress: process.env.EUREKA_INSTANCE_APPNAME || 'auth-service',
     dataCenterInfo: {
       '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
-      name: 'MyOwn',
-    },
+      name: 'MyOwn'
+    }
   },
   eureka: {
-    host: 'discovery-server', // Nome do serviço Eureka no compose
-    port: 8762,
-    servicePath: '/eureka/apps/',
-  },
-});
-
-// Endpoint de saúde (ANTES do app.listen)
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'UP' });
-});
-
-// Inicia cliente Eureka (APÓS app.listen)
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-  eurekaClient.start(error => {
-    console.log(error || 'Registrado no Eureka');
-  });
-});
-
-// Encerramento elegante
-process.on('SIGINT', () => {
-  eurekaClient.stop();
-  process.exit();
+    host: process.env.EUREKA_HOST || 'discovery-server',
+    port: parseInt(process.env.EUREKA_PORT) || 8761,
+    servicePath: '/eureka/'
+  }
 });

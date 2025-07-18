@@ -1,5 +1,9 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /workspace
+COPY . .
+RUN ./mvnw package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
 VOLUME /tmp
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
+COPY --from=builder /workspace/target/*.jar app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]

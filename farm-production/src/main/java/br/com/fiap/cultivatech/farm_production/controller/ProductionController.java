@@ -1,7 +1,7 @@
-package com.fiap.cultivatech.farm_production.controller;
+package br.com.fiap.cultivatech.farm_production.controller;
 
-import com.fiap.cultivatech.farm_production.model.Production;
-import com.fiap.cultivatech.farm_production.service.ProductionService;
+import br.com.fiap.cultivatech.farm_production.model.Production;
+import br.com.fiap.cultivatech.farm_production.service.ProductionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

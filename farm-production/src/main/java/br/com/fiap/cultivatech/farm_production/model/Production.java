@@ -1,4 +1,4 @@
-package com.fiap.cultivatech.farm_production.model;
+package br.com.fiap.cultivatech.farm_production.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
