@@ -1,14 +1,14 @@
-package br.com.fiap.cultivatech.farm_production.exception;
+// package br.com.fiap.cultivatech.farm_production.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+// import lombok.AllArgsConstructor;
+// import lombok.Data;
 
-import java.time.LocalDateTime;
+// import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
-public class ErrorDetails {
-    private LocalDateTime timestamp;
-    private String message;
-    private String details;
-}
+// @Data
+// @AllArgsConstructor
+// public class ErrorDetails {
+//     private LocalDateTime timestamp;
+//     private String message;
+//     private String details;
+// }

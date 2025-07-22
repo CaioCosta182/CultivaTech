@@ -94,13 +94,12 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
-    healthcheck:
+      defaultZone: http://discovery-server:8761/eureka/
       enabled: true
     registry-fetch-interval-seconds: 5
   instance:
     hostname: api-gateway
-    prefer-ip-address: true
+    prefer-ip-address: false
     lease-renewal-interval-in-seconds: 5
     lease-expiration-duration-in-seconds: 15
 

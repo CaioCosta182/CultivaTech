@@ -1,5 +1,5 @@
 # api-gateway/Dockerfile
 FROM openjdk:17-jdk-alpine
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
+RUN apk add --no-cache curl
+COPY target/*.jar app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]

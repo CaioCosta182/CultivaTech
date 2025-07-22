@@ -1,3 +1,4 @@
+
 services:
   # Banco de dados MySQL para autenticação
   auth-db:
@@ -7,6 +8,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin123
       MYSQL_DATABASE: cultivatech
+      MYSQL_USER: cultivatech_user
+      MYSQL_PASSWORD: user123
     volumes:
       - db-data:/var/lib/mysql
       - ./Autentication-Users/Back-End/sql/dump.sql:/docker-entrypoint-initdb.d/init.sql
@@ -25,6 +28,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin123
       MYSQL_DATABASE: propertydb
+      MYSQL_USER: property_user
+      MYSQL_PASSWORD: user123
     volumes:
       - property-data:/var/lib/mysql
     healthcheck:
@@ -42,12 +47,19 @@ services:
     container_name: discovery-server
     ports:
       - "8761:8761"
+    environment:
+      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: "false"
+      EUREKA_SERVER_WAIT_TIME_IN_MS_WHEN_SYNC_EMPTY: "0"
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_INSTANCE_HOSTNAME: discovery-server
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q UP || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 60s
+     test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+     interval: 10s
+     timeout: 10s
+     retries: 10
+     start_period: 30s
     networks:
       - cultivatech-net
 
@@ -58,14 +70,19 @@ services:
     container_name: config-server
     ports:
       - "8889:8889"
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: config-server
     depends_on:
       discovery-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8889/config/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "curl -f http://localhost:8889/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 15s
       retries: 5
+      start_period: 60s
     networks:
       - cultivatech-net
 
@@ -76,9 +93,22 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8889
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
     depends_on:
       discovery-server:
         condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
     networks:
       - cultivatech-net
 
@@ -90,31 +120,32 @@ services:
     ports:
       - "3000:3000"
     environment:
+      NODE_ENV: production
       DB_HOST: auth-db
       DB_NAME: cultivatech
-      DB_USER: root
-      DB_PASSWORD: admin123
+      DB_USER: cultivatech_user
+      DB_PASSWORD: user123
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
       PORT: 3000
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://localhost:8761/eureka/
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
       EUREKA_INSTANCE_APPNAME: auth-service
-      EUREKA_INSTANCE_INSTANCE_ID: auth-service:3000
-      EUREKA_INSTANCE_NON_SECURE_PORT: 3000
       EUREKA_INSTANCE_HOSTNAME: auth-service
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
-      # Configurações de saúde
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "true"
+      EUREKA_CLIENT_FETCH_REGISTRY: "true"
     depends_on:
-     discovery-server:
-      condition: service_healthy
-     auth-db:
-      condition: service_healthy
-     config-server:
-      condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      auth-db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+    networks:
+      - cultivatech-net
 
   # Frontend de Autenticação
   auth-frontend:
@@ -124,29 +155,43 @@ services:
     ports:
       - "5173:5173"
     environment:
-      REACT_APP_API_URL: http://localhost:8080
+      NODE_ENV: production
+      VITE_API_URL: http://api-gateway:8080  # Alterado para usar nome do serviço
     depends_on:
       api-gateway:
-        condition: service_started
+        condition: service_healthy
     networks:
       - cultivatech-net
 
   # Serviço de Propriedades
   property-service:
-    build: ./property-service
+    build: 
+      context: ./property-service
     container_name: property-service
     ports:
       - "8081:8081"
     environment:
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:mysql://property-db:3306/propertydb
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_USERNAME: property_user
+      SPRING_DATASOURCE_PASSWORD: user123
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8889
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: property-service
     depends_on:
       property-db:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 60s
     networks:
       - cultivatech-net
 
@@ -156,7 +201,7 @@ services:
       context: ./farm-production
     container_name: farm-production
     ports:
-      - "8082:8080"  # Alterado para porta 8082 externamente
+      - "8082:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://farm-production-db:3306/farm_production?useSSL=false
@@ -164,16 +209,21 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8889
+      EUREKA_INSTANCE_HOSTNAME: farm-production
     depends_on:
       farm-production-db:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
+      config-server:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 20s
+      retries: 5
+      start_period: 60s
     networks:
       - cultivatech-net
 
@@ -184,8 +234,10 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: farm_production
+      MYSQL_USER: farm_user
+      MYSQL_PASSWORD: user123
     ports:
-      - "3307:3306"  # Alterado para porta 3307 externamente
+      - "3307:3306"
     volumes:
       - farm_production_data:/var/lib/mysql
     healthcheck:
@@ -196,10 +248,13 @@ services:
     networks:
       - cultivatech-net
 
-
 networks:
   cultivatech-net:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
 
 volumes:
   db-data:

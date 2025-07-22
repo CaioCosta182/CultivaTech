@@ -60,5 +60,21 @@ cultivatech/
 ```
 
 
+
+# Todos os testes
+npm test
+
+# Apenas testes unitários
+npm run test:unit
+
+# Apenas testes de integração
+npm run test:integration
+
+# Modo watch (desenvolvimento)
+npm run test:watch
+
+
+
+DOCKER
 Teste de status
 docker ps --filter "name=discovery" --format "table {{.Names}}\t{{.Status}}"
