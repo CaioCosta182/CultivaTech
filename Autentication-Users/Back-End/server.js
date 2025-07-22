@@ -1,4 +1,4 @@
-import Eureka from 'eureka-js-client';
+const Eureka = require('eureka-js-client').Eureka;
 
 const eurekaClient = new Eureka({
   instance: {
@@ -36,7 +36,28 @@ const eurekaClient = new Eureka({
 
 // Inicia o cliente Eureka
 eurekaClient.start(error => {
-  console.log(error || 'Eureka client started');
+  if (error) {
+    console.error('Failed to register with Eureka:', error);
+  } else {
+    console.log('Successfully registered with Eureka');
+  }
+});
+
+// Adicionar listeners para eventos do cliente
+eurekaClient.on('started', () => {
+  console.log('Eureka client started');
+});
+
+eurekaClient.on('registered', () => {
+  console.log('Service registered with Eureka');
+});
+
+eurekaClient.on('deregistered', () => {
+  console.log('Service deregistered from Eureka');
+});
+
+eurekaClient.on('heartbeat', () => {
+  console.log('Heartbeat sent to Eureka');
 });
 
 // Manipulador de desligamento

@@ -142,8 +142,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 30s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 120s
     networks:
       - cultivatech-net
 
