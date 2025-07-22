@@ -8,10 +8,12 @@ cultivatech/
 │   ├── target
 │   ├── Dockerfile
 │   └── pom.xml
-├── tests/                        
-│   ├── auth-service-tests.ps1     
-│   ├── property-service-tests.ps1 # 
+├── tests/
+│   ├── auth-service-tests.ps1
+│   ├── property-service-tests.ps1 #
 │   └── production-service-tests.ps1 #
+│
+│
 ├── config-server/                 # Config Server
 │   ├── src/main/java/.../ConfigServerApplication.java
 │   ├── pom.xml
@@ -28,37 +30,99 @@ cultivatech/
 │   ├── src/main/java/.../ApiGatewayApplication.java
 │   ├── pom.xml
 │   └── ...
-├── auth-service/                  #(Microserviço 1: Autenticação e Usuário - agora em Spring Boot)
-│   ├── src/main/java/.../auth/
-│   │   ├── AuthApplication.java
-│   │   ├── config/
-│   │   ├── controller/
-│   │   ├── model/
-│   │   ├── repository/
-│   │   ├── security/
-│   │   └──service/
-├───  production-service/           # Microserviço de Propriedades
-│   ├── ... (similar ao auth-service)
-│   └── ...
-├─── property-service/               # Microserviço de Produção (Cultivos e Animais)
-│   ├── src/main/java/br/ifmg/cultivatech/property/
-│   ├── controller/PropertyController.java       # Endpoints REST
-│   ├── model/Property.java                      # Entidade JPA
-│   ├── service/PropertyService.java             # Lógica de negócio
-│   ├── repository/PropertyRepository.java       # Camada de dados
-│   └── dto/PropertyRequest.java                 # DTOs para APIs
-│   └── ...
+│
+│
+├───  production-service/           # Microserviço de Produção (Cultivos e Animais)
+│   ├── src/main/java/br/ifmg/cultivatech/auth/
+│   ├── controller/
+│   │    └── PropertyController.java
+│   ├── model/
+│   │    └── Property.java
+│   ├── service/
+│   │    └── PropertyService.java
+│   ├── repository/
+│   │    ├── PropertyRepository.java
+│   ├── config/
+│   │    ├── SecurityConfig.java
+│   │    └── WebMvcConfig.java.java
+│   └── resources/
+│        ├── application.yml
+│        └── application.properties
+│
+│
+├─── Property-Service/               # Microserviço de Propriedades
+│   ├── src/main/java/br/ifmg/cultivatech/auth/
+│   ├── controller/
+│   │    └── PropertyController.java
+│   ├── model/
+│   │    └── Property.java
+│   ├── service/
+│   │    └── PropertyService.java
+│   ├── repository/
+│   │    ├── PropertyRepository.java
+│   ├── config/
+│   │    ├── SecurityConfig.java
+│   │    └── WebMvcConfig.java.java
+│   └── resources/
+│        ├── application.yml
+│        └── application.properties
+│
+│
 ├── Autentication-Users/          (Microserviço 1: Autenticação e Usuários em javascript)
-│   ├── Back-End (Node e javascript)
+│   ├── Back-End (NODE)
+│   │   ├── config/
+│   │   │  └── database.js
+│   │   ├── controllers/
+│   │   │  └── authController.js
+│   │   ├── middlewares/
+│   │   │  └── authValidation.js.js
+│   │   ├── models/
+│   │   │  └── User.js
+│   │   ├── routes/
+│   │   │  └── authRoutes.js
+│   │   ├── sql/
+│   │   │  └── dump.sql
+│   │   ├── server.js
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   └── docker-compose.yml   
 │   ├── Front-End (React.js)
-│       ├── Dockerfile
-│       ├── vite.config.js
-│       └── .env
-│   └── docker-compose.yml             # Docker Compose para todos os serviços
-├── pom.xml
-└── docker-compose.yml
+│   │   ├── Dockerfile
+│   │   ├── vite.config.js
+│   │   └── .env
+└── testes
 ```
 
 
+Rodas testes de Autentication-USER
+# Todos os testes
+npm test
+
+# Apenas testes unitários
+npm run test:unit
+
+# Apenas testes de integração
+npm run test:integration
+
+# Modo watch (desenvolvimento)
+npm run test:watch
+
+
+
+DOCKER
 Teste de status
 docker ps --filter "name=discovery" --format "table {{.Names}}\t{{.Status}}"
+
+
+Reconstrua o serviço:
+
+docker-compose down
+docker-compose build --no-cache auth-service
+docker-compose up -d auth-service
+
+
+Verifique os logs:
+docker-compose logs -f auth-service
+
+Teste o health check:
+docker exec -it auth-service curl http://localhost:3000/health

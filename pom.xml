@@ -20,6 +20,7 @@
         <module>auth-service</module>
         <module>api-gateway</module>
         <module>property-service</module>
+        <module>farm-production</module>
     </modules>
 
 </project>
