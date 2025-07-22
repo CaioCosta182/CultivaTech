@@ -114,25 +114,24 @@ services:
 
   # Serviço de Autenticação (Node.js)
   auth-service:
+    hostname: auth-service
     build:
       context: ./Autentication-Users/Back-End
     container_name: auth-service
     ports:
       - "3000:3000"
+    expose:
+    - "3000"
     environment:
       NODE_ENV: production
       DB_HOST: auth-db
       DB_NAME: cultivatech
       DB_USER: cultivatech_user
       DB_PASSWORD: user123
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
       PORT: 3000
+      HOST: '0.0.0.0'
       EUREKA_HOST: discovery-server
       EUREKA_PORT: 8761
-      EUREKA_INSTANCE_APPNAME: auth-service
-      EUREKA_INSTANCE_HOSTNAME: auth-service
-      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "true"
-      EUREKA_CLIENT_FETCH_REGISTRY: "true"
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -140,9 +139,9 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 30s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 3
       start_period: 120s
     networks:
       - cultivatech-net

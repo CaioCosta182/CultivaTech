@@ -5,16 +5,14 @@ WORKDIR /app
 # Instala dependências necessárias
 RUN apk add --no-cache curl
 
-# Copia os arquivos de definição de dependências
-COPY package.json .
-
-# Instala dependências
+# Copia e instala dependências
+COPY package*.json ./
 RUN npm install
 
-# Copia o restante do código
+# Copia o código fonte
 COPY . .
 
-# Configura healthcheck
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
