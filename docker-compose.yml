@@ -1,4 +1,3 @@
-
 services:
   # Banco de dados MySQL para autenticação
   auth-db:
@@ -144,22 +143,6 @@ services:
       timeout: 30s
       retries: 5
       start_period: 60s
-    networks:
-      - cultivatech-net
-
-  # Frontend de Autenticação
-  auth-frontend:
-    build:
-      context: ./Autentication-Users/Front-End
-    container_name: auth-frontend
-    ports:
-      - "5173:5173"
-    environment:
-      NODE_ENV: production
-      VITE_API_URL: http://api-gateway:8080  # Alterado para usar nome do serviço
-    depends_on:
-      api-gateway:
-        condition: service_healthy
     networks:
       - cultivatech-net
 
