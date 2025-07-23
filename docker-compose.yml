@@ -21,7 +21,6 @@ services:
       retries: 10
     networks:
       - cultivatech-net
-    platform: linux/arm64
 
   # Banco de dados MySQL para propriedades
   property-db:
@@ -41,7 +40,6 @@ services:
       retries: 10
     networks:
       - cultivatech-net
-    platform: linux/arm64
 
   # Banco de dados para produção agrícola
   farm-production-db:
@@ -61,7 +59,6 @@ services:
       retries: 10
     networks:
       - cultivatech-net
-    platform: linux/arm64
 
   # Discovery Server (Eureka)
   discovery-server:
@@ -141,7 +138,6 @@ services:
       start_period: 60s
     networks:
       - cultivatech-net
-    platform: linux/arm64
 
   # Serviço de Autenticação (Node.js)
   auth-service:
@@ -177,8 +173,9 @@ services:
     networks:
       - cultivatech-net
 
-  # Frontend de Autenticação
+  # Frontend de Autenticação (Atualizado para registro no Eureka)
   auth-frontend:
+    hostname: auth-frontend
     build:
       context: ./Autentication-Users/Front-End
     container_name: auth-frontend
@@ -186,10 +183,18 @@ services:
       - "5173:5173"
     environment:
       NODE_ENV: production
-      VITE_API_URL: http://localhost:8080 # Alterado para localhost para acesso externo
+      VITE_API_URL: http://api-gateway:8080
+      PORT: 5173
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
     depends_on:
       api-gateway:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - cultivatech-net
 
