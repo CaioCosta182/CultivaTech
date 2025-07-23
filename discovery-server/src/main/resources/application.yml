@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: discovery-server
+  profiles:
+    active: dev
+
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: discovery-server
+    prefer-ip-address: false
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    enable-self-preservation: false
+    wait-time-in-ms-when-sync-empty: 0
+    response-cache-update-interval-ms: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    probes:
+      enabled: true
+  health:
+    defaults:
+      enabled: true
+    diskspace:
+      enabled: true
+# spring.application.name=discovery-server
+# server.port=8761
+# eureka.server.wait-time-in-ms-when-sync-empty=0
+# eureka.server.response-cache-update-interval-ms=5000
+# eureka.client.register-with-eureka=false
+# eureka.client.fetch-registry=false
+# eureka.instance.hostname=discovery-server
+# eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka/
+
+# # Configurações críticas de saúde
+# # ACTUATOR CONFIG
+# management.endpoints.web.exposure.include=*
+# management.endpoint.health.show-components=always
+# management.endpoint.health.show-details=always
+# management.health.defaults.enabled=true
+# management.endpoint.health.probes.enabled=true
+# management.health.diskspace.enabled=true

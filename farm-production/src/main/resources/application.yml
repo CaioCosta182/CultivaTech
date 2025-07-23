@@ -1,9 +1,11 @@
 server:
-  port: 8080 
+  port: 8080
 
 spring:
   application:
-    name: farm-production-service
+    name: farm-production
+  profiles:
+    active: prod
   datasource:
     url: jdbc:mysql://farm-production-db:3306/farm_production?useSSL=false
     username: root
@@ -16,6 +18,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    config:
+      enabled: false # Se não usar Config Server
 
 eureka:
   client:
@@ -23,16 +28,34 @@ eureka:
       defaultZone: http://discovery-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+    healthcheck:
+      enabled: true
   instance:
-    prefer-ip-address: false 
-    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
     hostname: farm-production
+    metadata-map:
+      zone: primary
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: "*"
   endpoint:
     health:
       show-details: always
+      show-components: always
+    probes:
+      enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
