@@ -1,14 +1,13 @@
-FROM eclipse-temurin:17-jdk-jammy AS builder
-WORKDIR /workspace
-COPY mvnw ./
-COPY .mvn .mvn
+FROM maven:3.8.6-eclipse-temurin-17 AS build
+WORKDIR /app
 COPY pom.xml .
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
-COPY src src
-RUN ./mvnw package -DskipTests
+RUN mvn dependency:go-offline -B  # Cache aqui
 
-FROM eclipse-temurin:17-jre-jammy
-VOLUME /tmp
-COPY --from=builder /workspace/target/*.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+COPY src ./src
+RUN mvn package -DskipTests -B
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/property-service-*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]
