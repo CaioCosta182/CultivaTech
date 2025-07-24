@@ -21,8 +21,7 @@ FROM eclipse-temurin:17-jre
 VOLUME /tmp
 # Corrigido: Copia o JAR para um diretório /app/
 # O nome do JAR deve ser EXATAMENTE o que o Maven gera.
-COPY --from=builder /workspace/target/farm-production-0.0.1-SNAPSHOT.jar /app/farm-production.jar
-
+COPY --from=builder /workspace/target/farm-production-1.0.0.jar /app/farm-production.jar
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "/app/farm-production.jar"]
