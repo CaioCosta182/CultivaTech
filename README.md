@@ -216,8 +216,6 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 - [ ] RNF04 - Cloud deploy
 - [ ] RNF05 - Monitoramento
 
-
-
 <!-- 
 ✅ Arquivo docker-compose.yml:
 docker-compose.yml orquestra 6 containers principais dentro de uma rede chamada cultivatech-net:
@@ -275,3 +273,4 @@ Volume: db-data para manter os dados do banco mesmo após reinicializações.
 
 docker-compose down -v  # Remove tudo, incluindo volumes
 docker-compose up -d    # Recria todos os serviços# CultivaTech - CI/CD Ativo
+c
