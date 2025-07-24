@@ -6,7 +6,7 @@ stages:
 .java_test_template: &java_test_job
   stage: test
   image: maven:3.8.5-openjdk-17
-  # tags: [local-deploy] # <--- REMOVIDA
+  tags: [local-deploy] # Mantido para usar runner local
   script:
     - cd $SERVICE_PATH
     - mvn test
@@ -18,7 +18,7 @@ stages:
 .node_test_template: &node_test_job
   stage: test
   image: node:18
-  # tags: [local-deploy] # <--- REMOVIDA
+  tags: [local-deploy] # Mantido para usar runner local
   before_script:
     - cd $SERVICE_PATH
     - npm install
@@ -35,7 +35,7 @@ stages:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
-  # tags: [local-deploy] # <--- REMOVIDA
+  tags: [local-deploy] # Mantido para usar runner local
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
@@ -109,7 +109,7 @@ deploy:
   image: docker/compose:latest
   services:
     - docker:20.10.16-dind
-  # tags: [local-deploy] # <--- REMOVIDA
+  tags: [local-deploy] # Mantido para usar runner local
   script:
     - echo "Iniciando deploy na máquina local..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
