@@ -14,19 +14,19 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "jest --detectOpenHandles --forceExit",
-    "test:unit": "jest __tests__/unit",
-    "test:integration": "jest __tests__/integration",
-    "test:watch": "jest --watch"
+    "test": "jest --detectOpenHandles --forceExit"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "./__tests__/integration/setup.js"
+    "setupFiles": [
+      "./jest.setup.js"
     ],
     "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/__tests__/"
+      "/node_modules/"
     ]
   }
 }

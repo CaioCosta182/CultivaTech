@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const pool = require("../config/database");
-const { validationResult } = require('express-validator');
+// CORREÇÃO: Importa especificamente o objeto 'pool' de dentro do módulo de database.
+const { pool } = require("../config/database");
+const { validationResult } = require("express-validator");
 
 // Helper function
 const generateToken = (userId) => {
@@ -18,7 +19,9 @@ const authController = {
       }
 
       const { email, password } = req.body;
-      const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+      const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+        email,
+      ]);
 
       if (rows.length === 0) {
         return res.status(401).json({ error: "Credenciais inválidas" });
@@ -26,7 +29,7 @@ const authController = {
 
       const user = rows[0];
       const isMatch = await bcrypt.compare(password, user.password);
-      
+
       if (!isMatch) {
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
@@ -43,9 +46,10 @@ const authController = {
       });
     } catch (error) {
       console.error("Erro no login:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Erro no servidor",
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
     }
   },
@@ -59,7 +63,7 @@ const authController = {
 
       const { name, email, password, cpfCnpj, phone, profileType } = req.body;
       const [existingUser] = await pool.query(
-        "SELECT id FROM users WHERE email = ?", 
+        "SELECT id FROM users WHERE email = ?",
         [email]
       );
 
@@ -83,20 +87,21 @@ const authController = {
           email,
           cpfCnpj,
           phone,
-          profileType
+          profileType,
         },
-        token
+        token,
       });
     } catch (error) {
       console.error("Erro no registro:", error);
-      
-      if (error.code === 'ER_DUP_ENTRY') {
+
+      if (error.code === "ER_DUP_ENTRY") {
         return res.status(400).json({ error: "Email já cadastrado" });
       }
-      
-      res.status(500).json({ 
+
+      res.status(500).json({
         error: "Erro no servidor",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   },
@@ -129,7 +134,7 @@ const authController = {
     } catch (error) {
       res.status(401).json({ error: "Token inválido" });
     }
-  }
+  },
 };
 
 module.exports = authController;
