@@ -1,11 +1,11 @@
-# .gitlab-ci.yml - Versão Final e Corrigida
+# .gitlab-ci.yml - Versão Final e Corrigida para Nomes Minúsculos
 
 stages:
   - test
   - build
   - deploy
 
-# ... (as secções .java_test_template, .node_test_template, .docker_build_template, e todos os jobs de 'test' e 'build' continuam exatamente iguais) ...
+# ... (as secções .java_test_template e .node_test_template continuam exatamente iguais) ...
 
 .java_test_template: &java_test_job
   stage: test
@@ -33,6 +33,7 @@ stages:
       changes:
         - $SERVICE_PATH/**/*
 
+# Template para jobs de build de imagem Docker (CORRIGIDO)
 .docker_build_template: &docker_build_job
   stage: build
   image: docker:20.10.16
@@ -43,93 +44,87 @@ stages:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - cd $SERVICE_PATH
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA -t $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE:latest
+    # CORREÇÃO: Converte o caminho do projeto para minúsculas
+    - IMAGE_PATH=$(echo "$CI_REGISTRY/$CI_PROJECT_PATH/$SERVICE_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker build -t $IMAGE_PATH:$CI_COMMIT_SHORT_SHA -t $IMAGE_PATH:latest .
+    - docker push $IMAGE_PATH:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE_PATH:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
       changes:
         - $SERVICE_PATH/**/*
 
+# ... (os jobs de 'test' continuam iguais) ...
+
 test:config-server:
-  <<: *java_test_job
-  variables: { SERVICE_PATH: Config-Server }
-
+  { <<: *java_test_job, variables: { SERVICE_PATH: Config-Server } }
 test:discovery-server:
-  <<: *java_test_job
-  variables: { SERVICE_PATH: discovery-server }
-
+  { <<: *java_test_job, variables: { SERVICE_PATH: discovery-server } }
 test:api-gateway:
-  <<: *java_test_job
-  variables: { SERVICE_PATH: api-gateway }
-
+  { <<: *java_test_job, variables: { SERVICE_PATH: api-gateway } }
 test:property-service:
-  <<: *java_test_job
-  variables: { SERVICE_PATH: Property-Service }
-
+  { <<: *java_test_job, variables: { SERVICE_PATH: Property-Service } }
 test:auth-backend:
-  <<: *node_test_job
-  variables: { SERVICE_PATH: Autentication-Users/Back-End }
+  {
+    <<: *node_test_job,
+    variables: { SERVICE_PATH: Autentication-Users/Back-End },
+  }
+
+# ========= ESTÁGIO DE BUILD (CORRIGIDO) =========
 
 build:config-server:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: Config-Server
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/config-server
+    SERVICE_NAME: config-server
 
 build:discovery-server:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: discovery-server
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/discovery-server
+    SERVICE_NAME: discovery-server
 
 build:api-gateway:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: api-gateway
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/api-gateway
+    SERVICE_NAME: api-gateway
 
 build:property-service:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: Property-Service
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/property-service
+    SERVICE_NAME: property-service
 
 build:auth-backend:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: Autentication-Users/Back-End
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-backend
+    SERVICE_NAME: auth-backend
 
 build:auth-frontend:
   <<: *docker_build_job
   variables:
     SERVICE_PATH: Autentication-Users/Front-End
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-frontend
+    SERVICE_NAME: auth-frontend
 
-# ========= ESTÁGIO DE DEPLOY (CORRIGIDO) =========
+# ... (a secção 'deploy' continua igual) ...
+
 deploy:
   stage: deploy
-  # CORREÇÃO: Usa uma imagem que contém as ferramentas Docker
   image: docker/compose:latest
   services:
     - docker:20.10.16-dind
-  tags: [local-deploy] # ESSENCIAL: Garante que o deploy rode na sua máquina
+  tags: [local-deploy]
   script:
     - echo "Iniciando deploy na máquina local..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-    # Exporta as variáveis de ambiente para o docker-compose
     - export DB_PASSWORD=$DB_PASSWORD
     - export JWT_SECRET=$JWT_SECRET
-    - export CI_REGISTRY=$CI_REGISTRY
-    - export CI_PROJECT_PATH=$CI_PROJECT_PATH
-
-    # Puxa as novas imagens e reinicia os serviços
+    - export CI_REGISTRY=$(echo "$CI_REGISTRY" | tr '[:upper:]' '[:lower:]')
+    - export CI_PROJECT_PATH=$(echo "$CI_PROJECT_PATH" | tr '[:upper:]' '[:lower:]')
     - docker-compose -f docker-compose.prod.yml pull
     - docker-compose -f docker-compose.prod.yml up -d --remove-orphans
-
-    # Limpa imagens antigas e não utilizadas
     - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
