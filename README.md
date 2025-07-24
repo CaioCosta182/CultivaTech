@@ -210,10 +210,10 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 
 ## ⚙️ Infraestrutura
 
-- [ ] RNF01 - Microserviços
-- [ ] RNF02 - Segurança
-- [ ] RNF03 - Banco de dados
-- [ ] RNF04 - Cloud deploy
+- [x ] RNF01 - Microserviços
+- [x ] RNF02 - Segurança
+- [x ] RNF03 - Banco de dados
+- [x] RNF04 - Cloud deploy
 - [ ] RNF05 - Monitoramento
 
 <!-- 
