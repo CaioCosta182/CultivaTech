@@ -1,9 +1,39 @@
 version: '3.8'
 
 services:
-  # Serviços de Infraestrutura
+  # BANCOS DE DADOS
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: cultivatech
+    volumes:
+      - db-data:/var/lib/mysql
+
+  property-db:
+    image: mysql:8.0
+    container_name: property-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: propertydb
+    volumes:
+      - property-data:/var/lib/mysql
+
+  farm-production-db:
+    image: mysql:8.0
+    container_name: farm-production-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: farm_production
+    volumes:
+      - farm-production-data:/var/lib/mysql
+
+  # INFRAESTRUTURA
   config-server:
-    # CORREÇÃO: Usa a variável IMAGE_TAG
     image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/config-server:${IMAGE_TAG}
     container_name: config-server
     restart: always
@@ -18,8 +48,6 @@ services:
       - "8761:8761"
     depends_on:
       - config-server
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
 
   api-gateway:
     image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/api-gateway:${IMAGE_TAG}
@@ -30,19 +58,8 @@ services:
     depends_on:
       - config-server
       - discovery-server
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
 
-  # Serviços de Aplicação
-  property-service:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG}
-    container_name: property-service
-    restart: always
-    depends_on:
-      - discovery-server
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-
+  # SERVIÇOS DE APLICAÇÃO
   auth-backend:
     image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-backend:${IMAGE_TAG}
     container_name: auth-backend
@@ -56,6 +73,30 @@ services:
       - DB_NAME=cultivatech
       - JWT_SECRET=${JWT_SECRET}
 
+  property-service:
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG}
+    container_name: property-service
+    restart: always
+    depends_on:
+      - property-db
+      - discovery-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://property-db:3306/propertydb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+
+  farm-production:
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/farm-production:${IMAGE_TAG}
+    container_name: farm-production
+    restart: always
+    depends_on:
+      - farm-production-db
+      - discovery-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://farm-production-db:3306/farm_production
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+
   auth-frontend:
     image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-frontend:${IMAGE_TAG}
     container_name: auth-frontend
@@ -65,16 +106,7 @@ services:
     depends_on:
       - api-gateway
 
-  # Banco de Dados
-  auth-db:
-    image: mysql:8.0
-    container_name: auth-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: cultivatech
-    volumes:
-      - auth-db-data:/var/lib/mysql
-
 volumes:
-  auth-db-data:
+  db-data:
+  property-data:
+  farm-production-data:
