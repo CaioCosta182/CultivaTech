@@ -214,7 +214,6 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 - [x ] RNF02 - Segurança
 - [x ] RNF03 - Banco de dados
 - [x] RNF04 - Cloud deploy
-- [ ] RNF05 - Monitoramento
 
 <!-- 
 ✅ Arquivo docker-compose.yml:
