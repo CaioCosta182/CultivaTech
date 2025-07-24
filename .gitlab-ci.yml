@@ -1,0 +1,146 @@
+# .gitlab-ci.yml
+
+# Define os estágios (etapas) do pipeline.
+stages:
+  - test
+  - build
+  - deploy
+
+# Template para jobs Java (Maven). Evita repetição de código.
+.java_template: &java_job
+  stage: test
+  image: maven:3.8.5-openjdk-17 # Imagem Docker com Maven e Java 17
+  before_script:
+    - cd $SERVICE_PATH # Navega para a pasta do serviço
+  script:
+    - mvn clean install # Roda testes e empacota a aplicação
+
+# Template para jobs de build de imagem Docker.
+.docker_build_template: &docker_build
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    # Login no registro de contêineres do GitLab. As variáveis são configuradas no GitLab.
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - cd $SERVICE_PATH
+    # Constrói a imagem Docker e a envia para o registro do GitLab.
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  rules:
+    # Só executa este job se houver mudanças na pasta do serviço.
+    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+      changes:
+        - $SERVICE_PATH/**/*
+
+# ========= TEST STAGE =========
+
+test:config-server:
+  <<: *java_job
+  variables:
+    SERVICE_PATH: config-server
+
+test:discovery-server:
+  <<: *java_job
+  variables:
+    SERVICE_PATH: discovery-server
+
+test:api-gateway:
+  <<: *java_job
+  variables:
+    SERVICE_PATH: api-gateway
+
+test:property-service:
+  <<: *java_job
+  variables:
+    SERVICE_PATH: Property-Service # O nome da pasta parece ser diferente
+
+test:auth-backend:
+  stage: test
+  image: node:18
+  variables:
+    SERVICE_PATH: Autentication-Users/Back-End
+  before_script:
+    - cd $SERVICE_PATH
+    - npm install
+  script:
+    - npm test
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+      changes:
+        - $SERVICE_PATH/**/*
+
+# ========= BUILD STAGE =========
+
+build:config-server:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: config-server
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/config-server
+
+build:discovery-server:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: discovery-server
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/discovery-server
+
+build:api-gateway:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: api-gateway
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/api-gateway
+
+build:property-service:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: Property-Service
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/property-service
+
+build:auth-backend:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: Autentication-Users/Back-End
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-backend
+
+build:auth-frontend:
+  <<: *docker_build
+  variables:
+    SERVICE_PATH: Autentication-Users/Front-End
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-frontend
+
+# ========= DEPLOY STAGE =========
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    # Instala o SSH client e o docker-compose
+    - apk update && apk add openssh-client docker-compose
+    - eval $(ssh-agent -s)
+    # Adiciona a chave SSH (configurada como variável no GitLab) para acessar o servidor
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    # Conecta no servidor de deploy via SSH e executa os comandos
+    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+        cd /home/ubuntu/cultivatech &&
+        
+        # Faz login no registro do GitLab
+        echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY &&
+        
+        # Exporta a tag da imagem para ser usada no docker-compose
+        export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
+        
+        # Puxa as novas imagens e reinicia os serviços
+        docker-compose -f docker-compose.prod.yml pull &&
+        docker-compose -f docker-compose.prod.yml up -d &&
+
+        # Limpa imagens antigas e não utilizadas
+        docker image prune -f
+      "
+  rules:
+    # Só executa este job se houver mudanças na branch principal
+    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'

@@ -1,5 +1,0 @@
-# Ignorar diretórios e arquivos do projeto
-target/
-*.iml
-.idea
-.git

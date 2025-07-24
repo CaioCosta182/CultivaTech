@@ -1,17 +1,10 @@
-FROM eclipse-temurin:17-jdk-jammy AS builder
+# api-gateway/Dockerfile
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /workspace
-
-# Copia TUDO primeiro (simplificado)
 COPY . .
-COPY mvnw ./
-COPY .mvn .mvn
-COPY pom.xml .
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
-COPY src src
-RUN ./mvnw package -DskipTests
+RUN mvn package -DskipTests
 
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre
 VOLUME /tmp
 COPY --from=builder /workspace/target/*.jar app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]

@@ -1,46 +1,35 @@
-# Usa imagem Node.js compatível com ARM (evita problemas no Alpine)
-FROM --platform=linux/amd64 node:18.20.2-alpine
+FROM node:18.20.2-alpine
 
 WORKDIR /app
 
-<<<<<<< HEAD
-# Instala dependências necessárias
-RUN apk add --no-cache curl
+# Instala curl para healthchecks e jq para manipulação de JSON
+RUN apk add --no-cache curl jq
 
-# Copia e instala dependências
-COPY package*.json ./
-RUN npm install
+# Cria package.json mínimo para instalação inicial
+RUN echo '{"dependencies":{"eureka-js-client":"4.5.0"}}' > package.json
 
-# Copia o código fonte
+# Instala o eureka-js-client primeiro com flags especiais
+RUN npm install eureka-js-client@4.5.0 --legacy-peer-deps --ignore-scripts
+
+# Copia o package.json real
+COPY package.json .
+
+# Instala outras dependências
+RUN npm install --legacy-peer-deps
+
+# Copia o restante do código
 COPY . .
 
-# Healthcheck
+# Configura como ES Module (usando jq)
+RUN echo '{"type":"module"}' > temp.json && \
+    jq -s '.[0] * .[1]' package.json temp.json > temp2.json && \
+    mv temp2.json package.json && \
+    rm temp.json
+
+# Healthcheck endpoint
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
-=======
-# Instala dependências de sistema (curl, jq) + bibliotecas para Eureka (Java-like discovery)
-RUN apk add --no-cache \
-    curl \
-    jq \
-    openjdk11-jre-headless  # Necessário para Eureka Client
-
-# Cache de dependências (melhora rebuilds)
-COPY package.json package-lock.json* ./
-RUN npm install --legacy-peer-deps --ignore-scripts
-
-# Copia o resto do código
-COPY . .
-
-# Configura como ES Module (alternativa mais limpa)
-RUN jq '. + {"type":"module"}' package.json > temp.json && \
-    mv temp.json package.json
-
-# Healthcheck otimizado
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
->>>>>>> CaioCosta-dev
     CMD curl -f http://localhost:3000/health || exit 1
 
 EXPOSE 3000
 
-RUN apk add --no-cache mysql-client
-
-CMD ["node", "--enable-source-maps", "server.js"]  # Habilita source maps para debugging
+CMD ["node", "server.js"]

@@ -1,94 +1,68 @@
-require('dotenv').config();
-const express = require('express');
-const Eureka = require('eureka-js-client').Eureka;
-const db = require('./config/database');
-const authRoutes = require('./routes/authRoutes');
+import express from "express";
+import { Eureka } from "eureka-js-client";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
 
-// Middlewares
+// Middlewares e rotas do seu frontend/backend
+app.use(express.static("build")); // Se servir arquivos React
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Rotas
-app.use('/api/auth', authRoutes);
-
-// Health Check
-app.get('/health', async (req, res) => {
-  try {
-    await db.authenticate();
-    res.status(200).json({
-      status: "UP",
-      dbStatus: "CONNECTED",
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(503).json({
-      status: "DOWN",
-      error: error.message
-    });
-  }
+// ✅ Endpoint de Health Check (OBRIGATÓRIO para o Eureka)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP" });
 });
 
-// Configuração do Eureka Client
+// ✅ Configuração do Eureka Client
 const eurekaClient = new Eureka({
   instance: {
-    app: 'auth-service',
-    instanceId: `auth-service:${PORT}`,
-    hostName: 'auth-service',
-    ipAddr: 'auth-service',
-    port: { '$': PORT, '@enabled': true },
-    vipAddress: 'auth-service',
-    statusPageUrl: `http://auth-service:${PORT}/health`,
-    healthCheckUrl: `http://auth-service:${PORT}/health`,
+    app: "auth-frontend", // Nome que aparecerá no Eureka
+    instanceId: `auth-frontend:${PORT}:${process.env.HOSTNAME || "local"}`,
+    hostName: process.env.HOSTNAME || "auth-frontend", // Nome do container no Docker
+    ipAddr: "172.20.0.X", // ❗ Substitua pelo IP real do container (use `docker inspect`)
+    port: {
+      $: PORT,
+      "@enabled": true,
+    },
+    vipAddress: "auth-frontend",
+    statusPageUrl: `http://${
+      process.env.HOSTNAME || "auth-frontend"
+    }:${PORT}/health`,
+    healthCheckUrl: `http://${
+      process.env.HOSTNAME || "auth-frontend"
+    }:${PORT}/health`,
     dataCenterInfo: {
-      '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
-      name: 'MyOwn'
+      "@class": "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo",
+      name: "MyOwn",
     },
     leaseInfo: {
-      renewalIntervalInSecs: 30,
-      durationInSecs: 90
-    }
+      renewalIntervalInSecs: 10, // Tenta renovar a cada 10s
+      durationInSecs: 30, // Remove após 30s se não receber heartbeat
+    },
   },
   eureka: {
-    host: 'discovery-server',
+    host: "discovery-server", // Nome do serviço Eureka no docker-compose.yml
     port: 8761,
-    servicePath: '/eureka/apps/',
-    maxRetries: 10,
-    heartbeatInterval: 30000,
-    registryFetchInterval: 30000
-  }
+    servicePath: "/eureka/apps/",
+    maxRetries: 3,
+    heartbeatInterval: 5000, // Envia heartbeat a cada 5s
+  },
 });
 
-// Inicialização
-const server = app.listen(PORT, HOST, () => {
-  console.log(`✅ Auth Service rodando em http://${HOST}:${PORT}`);
-});
-
-// Eureka Handlers
-eurekaClient.start(error => {
-  if (error) console.error('Eureka registration failed:', error);
-  else console.log('✅ Registrado no Eureka');
-});
-
-eurekaClient.on('registered', () => {
-  console.log('🔄 Service registered with Eureka');
-});
-
-eurekaClient.on('heartbeat', () => {
-  console.log('❤️ Heartbeat enviado ao Eureka');
-});
-
-// Graceful Shutdown
-process.on('SIGINT', () => {
-  console.log('🛑 Desregistrando do Eureka...');
-  eurekaClient.stop(() => {
-    server.close(() => {
-      console.log('🚪 Servidor encerrado');
-      process.exit();
-    });
+// Inicia o servidor e registra no Eureka
+app.listen(PORT, () => {
+  console.log(`✅ auth-frontend rodando na porta ${PORT}`);
+  eurekaClient.start((error) => {
+    if (error) {
+      console.error("❌ Falha ao registrar no Eureka:", error);
+    } else {
+      console.log("📡 Registrado no Eureka como auth-frontend");
+    }
   });
+});
+
+// Desregistra ao encerrar (ex: Ctrl+C)
+process.on("SIGINT", () => {
+  eurekaClient.stop();
+  process.exit();
 });

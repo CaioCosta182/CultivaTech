@@ -17,7 +17,7 @@
     <modules>
         <module>config-server</module>
         <module>discovery-server</module>
-        <module>auth-service</module>
+        <module>front-end</module>
         <module>api-gateway</module>
         <module>property-service</module>
         <module>farm-production</module>
