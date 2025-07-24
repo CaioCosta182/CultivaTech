@@ -98,11 +98,8 @@ Rodas testes de Autentication-USER
 # Todos os testes
 npm test
 
-# Apenas testes unitários
-npm run test:unit
-
-# Apenas testes de integração
-npm run test:integration
+#Todos os testes JAVA
+./mvnw test
 
 # Modo watch (desenvolvimento)
 npm run test:watch
