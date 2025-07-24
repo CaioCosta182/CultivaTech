@@ -6,7 +6,7 @@ stages:
 .java_test_template: &java_test_job
   stage: test
   image: maven:3.8.5-openjdk-17
-  # tags: [local-deploy] # <--- REMOVIDA
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   script:
     - cd $SERVICE_PATH
     - mvn test
@@ -16,7 +16,7 @@ stages:
 .node_test_template: &node_test_job
   stage: test
   image: node:18
-  # tags: [local-deploy] # <--- REMOVIDA
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   before_script:
     - cd $SERVICE_PATH
     - npm install
@@ -31,7 +31,7 @@ stages:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
-  # tags: [local-deploy] # <--- REMOVIDA
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
@@ -97,6 +97,12 @@ build:auth-frontend:
     SERVICE_PATH: Autentication-Users/Front-End
     SERVICE_NAME: auth-frontend
 
+build:farm-production: # <--- JOB ADICIONADO/CORRIGIDO
+  <<: *docker_build_job
+  variables:
+    SERVICE_PATH: farm-production
+    SERVICE_NAME: farm-production
+
 # ========= ESTÁGIO DE DEPLOY =========
 
 deploy:
@@ -104,7 +110,7 @@ deploy:
   image: docker/compose:latest
   services:
     - docker:20.10.16-dind
-  # tags: [local-deploy] # <--- REMOVIDA
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   script:
     - echo "Iniciando deploy na máquina local..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
