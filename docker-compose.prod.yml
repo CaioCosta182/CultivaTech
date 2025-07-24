@@ -34,14 +34,14 @@ services:
 
   # INFRAESTRUTURA
   config-server:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/config-server:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/config-server:${IMAGE_TAG:-latest}
     container_name: config-server
     restart: always
     ports:
       - "8888:8888"
 
   discovery-server:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/discovery-server:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/discovery-server:${IMAGE_TAG:-latest}
     container_name: discovery-server
     restart: always
     ports:
@@ -50,7 +50,7 @@ services:
       - config-server
 
   api-gateway:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/api-gateway:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/api-gateway:${IMAGE_TAG:-latest}
     container_name: api-gateway
     restart: always
     ports:
@@ -61,7 +61,7 @@ services:
 
   # SERVIÇOS DE APLICAÇÃO
   auth-backend:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-backend:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-backend:${IMAGE_TAG:-latest}
     container_name: auth-backend
     restart: always
     depends_on:
@@ -74,7 +74,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
 
   property-service:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG:-latest}
     container_name: property-service
     restart: always
     depends_on:
@@ -86,7 +86,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 
   farm-production:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/farm-production:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/farm-production:${IMAGE_TAG:-latest}
     container_name: farm-production
     restart: always
     depends_on:
@@ -98,7 +98,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 
   auth-frontend:
-    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-frontend:${IMAGE_TAG}
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-frontend:${IMAGE_TAG:-latest}
     container_name: auth-frontend
     restart: always
     ports:
