@@ -4,31 +4,77 @@ services:
   # Serviços de Infraestrutura
   config-server:
     # CORREÇÃO: Usa a variável IMAGE_TAG
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/config-server:${IMAGE_TAG}
-    # ... (o resto do serviço continua igual)
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/config-server:${IMAGE_TAG}
+    container_name: config-server
+    restart: always
+    ports:
+      - "8888:8888"
 
   discovery-server:
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/discovery-server:${IMAGE_TAG}
-    # ...
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/discovery-server:${IMAGE_TAG}
+    container_name: discovery-server
+    restart: always
+    ports:
+      - "8761:8761"
+    depends_on:
+      - config-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
 
   api-gateway:
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/api-gateway:${IMAGE_TAG}
-    # ...
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/api-gateway:${IMAGE_TAG}
+    container_name: api-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - config-server
+      - discovery-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
 
   # Serviços de Aplicação
   property-service:
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG}
-    # ...
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/property-service:${IMAGE_TAG}
+    container_name: property-service
+    restart: always
+    depends_on:
+      - discovery-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
 
   auth-backend:
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/auth-backend:${IMAGE_TAG}
-    # ...
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-backend:${IMAGE_TAG}
+    container_name: auth-backend
+    restart: always
+    depends_on:
+      - auth-db
+    environment:
+      - DB_HOST=auth-db
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=cultivatech
+      - JWT_SECRET=${JWT_SECRET}
 
   auth-frontend:
-    image: ${CI_REGISTRY}/${CI_PROJECT_PATH_LOWER}/auth-frontend:${IMAGE_TAG}
-    # ...
-  
+    image: ${CI_REGISTRY_LOWER}/${CI_PROJECT_PATH_LOWER}/auth-frontend:${IMAGE_TAG}
+    container_name: auth-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway
+
   # Banco de Dados
   auth-db:
     image: mysql:8.0
-    # ... (o resto do ficheiro continua igual)
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: cultivatech
+    volumes:
+      - auth-db-data:/var/lib/mysql
+
+volumes:
+  auth-db-data:
