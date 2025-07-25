@@ -198,7 +198,7 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 
 ## 🐄 Cultivos e Animais
 
-- [ ] RF08 - Cadastro de cultivares
+- [x ] RF08 - Cadastro de cultivares
 - [ ] RF09 - Cadastro de animais
 - [ ] RF10 - Acompanhamento de safras
 
