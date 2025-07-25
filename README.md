@@ -198,7 +198,7 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 
 ## 🐄 Cultivos e Animais
 
-- [ ] RF08 - Cadastro de cultivares
+- [x ] RF08 - Cadastro de cultivares
 - [ ] RF09 - Cadastro de animais
 - [ ] RF10 - Acompanhamento de safras
 
@@ -210,13 +210,10 @@ Configurar CI/CD (GitHub Actions/GitLab CI).
 
 ## ⚙️ Infraestrutura
 
-- [ ] RNF01 - Microserviços
-- [ ] RNF02 - Segurança
-- [ ] RNF03 - Banco de dados
-- [ ] RNF04 - Cloud deploy
-- [ ] RNF05 - Monitoramento
-
-
+- [x ] RNF01 - Microserviços
+- [x ] RNF02 - Segurança
+- [x ] RNF03 - Banco de dados
+- [x] RNF04 - Cloud deploy
 
 <!-- 
 ✅ Arquivo docker-compose.yml:
@@ -274,4 +271,4 @@ Volume: db-data para manter os dados do banco mesmo após reinicializações.
 
 
 docker-compose down -v  # Remove tudo, incluindo volumes
-docker-compose up -d    # Recria todos os serviços
+docker-compose up -d    # Recria todos os serviços# CultivaTech - CI/CD Ativo

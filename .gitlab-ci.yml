@@ -1,67 +1,22 @@
-# .gitlab-ci.yml
-
-# Define os estágios (etapas) do pipeline.
 stages:
   - test
   - build
   - deploy
 
-# Template para jobs Java (Maven). Evita repetição de código.
-.java_template: &java_job
+.java_test_template: &java_test_job
   stage: test
-  image: maven:3.8.5-openjdk-17 # Imagem Docker com Maven e Java 17
-  before_script:
-    - cd $SERVICE_PATH # Navega para a pasta do serviço
-  script:
-    - mvn clean install # Roda testes e empacota a aplicação
-
-# Template para jobs de build de imagem Docker.
-.docker_build_template: &docker_build
-  stage: build
-  image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
-  before_script:
-    # Login no registro de contêineres do GitLab. As variáveis são configuradas no GitLab.
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  image: maven:3.8.5-openjdk-17
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   script:
     - cd $SERVICE_PATH
-    # Constrói a imagem Docker e a envia para o registro do GitLab.
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - mvn test
   rules:
-    # Só executa este job se houver mudanças na pasta do serviço.
     - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
-      changes:
-        - $SERVICE_PATH/**/*
 
-# ========= TEST STAGE =========
-
-test:config-server:
-  <<: *java_job
-  variables:
-    SERVICE_PATH: config-server
-
-test:discovery-server:
-  <<: *java_job
-  variables:
-    SERVICE_PATH: discovery-server
-
-test:api-gateway:
-  <<: *java_job
-  variables:
-    SERVICE_PATH: api-gateway
-
-test:property-service:
-  <<: *java_job
-  variables:
-    SERVICE_PATH: Property-Service # O nome da pasta parece ser diferente
-
-test:auth-backend:
+.node_test_template: &node_test_job
   stage: test
   image: node:18
-  variables:
-    SERVICE_PATH: Autentication-Users/Back-End
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   before_script:
     - cd $SERVICE_PATH
     - npm install
@@ -69,78 +24,103 @@ test:auth-backend:
     - npm test
   rules:
     - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
-      changes:
-        - $SERVICE_PATH/**/*
 
-# ========= BUILD STAGE =========
+# Template para jobs de build de imagem Docker
+.docker_build_template: &docker_build_job
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - cd $SERVICE_PATH
+    - IMAGE_PATH=$(echo "$CI_REGISTRY/$CI_PROJECT_PATH/$SERVICE_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker build -t $IMAGE_PATH:$CI_COMMIT_SHORT_SHA -t $IMAGE_PATH:latest .
+    - docker push $IMAGE_PATH:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE_PATH:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+
+# ========= JOBS DE TESTE =========
+
+test:config-server:
+  { <<: *java_test_job, variables: { SERVICE_PATH: Config-Server } }
+test:discovery-server:
+  { <<: *java_test_job, variables: { SERVICE_PATH: discovery-server } }
+test:api-gateway:
+  { <<: *java_test_job, variables: { SERVICE_PATH: api-gateway } }
+test:property-service:
+  { <<: *java_test_job, variables: { SERVICE_PATH: Property-Service } }
+test:auth-backend:
+  {
+    <<: *node_test_job,
+    variables: { SERVICE_PATH: Autentication-Users/Back-End },
+  }
+
+# ========= ESTÁGIO DE BUILD =========
 
 build:config-server:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
-    SERVICE_PATH: config-server
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/config-server
+    SERVICE_PATH: Config-Server
+    SERVICE_NAME: config-server
 
 build:discovery-server:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
     SERVICE_PATH: discovery-server
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/discovery-server
+    SERVICE_NAME: discovery-server
 
 build:api-gateway:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
     SERVICE_PATH: api-gateway
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/api-gateway
+    SERVICE_NAME: api-gateway
 
 build:property-service:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
     SERVICE_PATH: Property-Service
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/property-service
+    SERVICE_NAME: property-service
 
 build:auth-backend:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
     SERVICE_PATH: Autentication-Users/Back-End
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-backend
+    SERVICE_NAME: auth-backend
 
 build:auth-frontend:
-  <<: *docker_build
+  <<: *docker_build_job
   variables:
     SERVICE_PATH: Autentication-Users/Front-End
-    CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/auth-frontend
+    SERVICE_NAME: auth-frontend
 
-# ========= DEPLOY STAGE =========
+build:farm-production: # <--- JOB ADICIONADO/CORRIGIDO
+  <<: *docker_build_job
+  variables:
+    SERVICE_PATH: farm-production
+    SERVICE_NAME: farm-production
+
+# ========= ESTÁGIO DE DEPLOY =========
 
 deploy:
   stage: deploy
-  image: alpine:latest
-  before_script:
-    # Instala o SSH client e o docker-compose
-    - apk update && apk add openssh-client docker-compose
-    - eval $(ssh-agent -s)
-    # Adiciona a chave SSH (configurada como variável no GitLab) para acessar o servidor
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  image: docker/compose:latest
+  services:
+    - docker:20.10.16-dind
+  # tags: [local-deploy] # As tags foram removidas para usar Shared Runners
   script:
-    # Conecta no servidor de deploy via SSH e executa os comandos
-    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
-        cd /home/ubuntu/cultivatech &&
-        
-        # Faz login no registro do GitLab
-        echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY &&
-        
-        # Exporta a tag da imagem para ser usada no docker-compose
-        export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
-        
-        # Puxa as novas imagens e reinicia os serviços
-        docker-compose -f docker-compose.prod.yml pull &&
-        docker-compose -f docker-compose.prod.yml up -d &&
+    - echo "Iniciando deploy na máquina local..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - export CI_REGISTRY_LOWER=$(echo "$CI_REGISTRY" | tr '[:upper:]' '[:lower:]')
+    - export CI_PROJECT_PATH_LOWER=$(echo "$CI_PROJECT_PATH" | tr '[:upper:]' '[:lower:]')
+    - export DB_PASSWORD=$DB_PASSWORD
+    - export JWT_SECRET=$JWT_SECRET
 
-        # Limpa imagens antigas e não utilizadas
-        docker image prune -f
-      "
+    - docker-compose -f docker-compose.prod.yml pull
+    - docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+    - docker image prune -f
   rules:
-    # Só executa este job se houver mudanças na branch principal
     - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
