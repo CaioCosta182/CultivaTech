@@ -11,7 +11,7 @@ stages:
     - cd $SERVICE_PATH
     - mvn test
   rules:
-    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+    - if: '$CI_COMMIT_BRANCH == "LuSilva-dev"'
 
 .node_test_template: &node_test_job
   stage: test
@@ -23,7 +23,7 @@ stages:
   script:
     - npm test
   rules:
-    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+    - if: '$CI_COMMIT_BRANCH == "LuSilva-dev"'
 
 # Template para jobs de build de imagem Docker
 .docker_build_template: &docker_build_job
@@ -41,7 +41,7 @@ stages:
     - docker push $IMAGE_PATH:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE_PATH:latest
   rules:
-    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+    - if: '$CI_COMMIT_BRANCH == "LuSilva-dev"'
 
 # ========= JOBS DE TESTE =========
 
@@ -123,4 +123,4 @@ deploy:
     - docker-compose -f docker-compose.prod.yml up -d --remove-orphans
     - docker image prune -f
   rules:
-    - if: '$CI_COMMIT_BRANCH == "CaioCosta-dev"'
+    - if: '$CI_COMMIT_BRANCH == "LuSilva-dev"'
